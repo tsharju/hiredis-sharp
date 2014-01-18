@@ -3,6 +3,10 @@ using System.Runtime.InteropServices;
 
 namespace Hiredis
 {
+	public class ConnectionFailedException : System.Exception {
+		public ConnectionFailedException(string msg) : base(msg) {}
+	}
+
 	public class Reply : IDisposable
 	{
 		private IntPtr replyPtr;
@@ -41,10 +45,8 @@ namespace Hiredis
 
 			var context = (ContextStruct) Marshal.PtrToStructure(this.contextPtr, typeof(ContextStruct));
 
-			if (context.error == 0)
-				System.Console.WriteLine("Connected!");
-			else
-				System.Console.WriteLine("ERROR: " + context.errstr);
+			if (context.error != 0)
+				throw new ConnectionFailedException(context.errstr);
 		}
 
 		public void Dispose()
