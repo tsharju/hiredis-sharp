@@ -76,6 +76,17 @@ namespace Hiredis
 			return Command("GET " + key);
 		}
 
+		public Reply DEL(string key)
+		{
+			return Command("DEL " + key);
+		}
+
+		public Reply DEL(string[] keys)
+		{
+			var keysString = String.Join(" ", keys);
+			return Command("DEL " + keysString);
+		}
+
 		public Reply PING()
 		{
 			return Command("PING");
