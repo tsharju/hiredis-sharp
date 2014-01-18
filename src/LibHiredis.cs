@@ -14,44 +14,44 @@ namespace Hiredis
 	}
 
 	[StructLayout(LayoutKind.Sequential)]
-	public struct ContextStruct
+	internal struct ContextStruct
 	{
-	    public int error;
+	    internal int error;
 	    [MarshalAs(UnmanagedType.ByValTStr, SizeConst=128)]
-	    public string errstr;
-	    public int fd;
-	    public int flags;
-	    public IntPtr obuf;
-	    public IntPtr reader;
+	    internal string errstr;
+	    internal int fd;
+	    internal int flags;
+	    internal IntPtr obuf;
+	    internal IntPtr reader;
 	}
 
 	[StructLayout(LayoutKind.Sequential)]
-	public struct ReplyStruct
+	internal struct ReplyStruct
 	{
-		public ReplyType type;
-		public Int64 integer;
-		public int len;
+		internal ReplyType type;
+		internal Int64 integer;
+		internal int len;
 		[MarshalAs(UnmanagedType.LPTStr)]
-		public string str;
-		public UIntPtr elements;
-		public IntPtr element;
+		internal string str;
+		internal UIntPtr elements;
+		internal IntPtr element;
 	}
 
-	static public class LibHiredis
+	static internal class LibHiredis
 	{
 		[DllImport ("libhiredis")]
-		public static extern void redisFree(IntPtr context);
+		internal static extern void redisFree(IntPtr context);
 
 		[DllImport ("libhiredis")]
-		public static extern IntPtr redisConnect(string host, int port);
+		internal static extern IntPtr redisConnect(string host, int port);
 
 		[DllImport ("libhiredis")]
-		public static extern IntPtr redisCommand(IntPtr context, string command);
+		internal static extern IntPtr redisCommand(IntPtr context, string command);
 
 		[DllImport ("libhiredis")]
-		public static extern IntPtr redisCommand(IntPtr context, string command, string value, UIntPtr valueLen);
+		internal static extern IntPtr redisCommand(IntPtr context, string command, string value, UIntPtr valueLen);
 
 		[DllImport ("libhiredis")]
-		public static extern void freeReplyObject(IntPtr reply);
+		internal static extern void freeReplyObject(IntPtr reply);
 	}
 }
