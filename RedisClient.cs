@@ -2,42 +2,31 @@ using System;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 
-namespace Redis
+namespace Hiredis
 {
-	internal enum ReplyType
+	public class Reply : IDisposable
 	{
-		String = 1,
-		Array = 2,
-		Integer = 3,
-		Nil = 4,
-		Status = 5,
-		Error = 6
+		private IntPtr replyPtr;
+		private ReplyStruct reply;
+
+		public string String { get { return reply.str; } }
+		public ReplyType Type { get { return reply.type; } }
+
+		public Reply(IntPtr replyPtr)
+		{
+			this.replyPtr = replyPtr;
+
+			if (replyPtr != IntPtr.Zero)
+				this.reply = (ReplyStruct) Marshal.PtrToStructure(replyPtr, typeof(ReplyStruct));
+		}
+
+		public void Dispose()
+		{
+			LibHiredis.freeReplyObject(this.replyPtr);
+		}
 	}
 
-	[StructLayout(LayoutKind.Sequential)]
-	internal struct Context
-	{
-	    internal int error;
-	    [MarshalAs(UnmanagedType.ByValTStr, SizeConst=128)]
-	    internal string errstr;
-	    internal int fd;
-	    internal int flags;
-	    internal IntPtr obuf;
-	    internal IntPtr reader;
-	}
-
-	[StructLayout(LayoutKind.Sequential)]
-	internal struct Reply
-	{
-		internal ReplyType type;
-		internal Int64 integer;
-		internal int len;
-		internal IntPtr str;
-		internal UIntPtr elements;
-		internal IntPtr element;
-	}
-
-	public class Client
+	public class Client : IDisposable
 	{
 		public string host;
 		public int port;
@@ -49,9 +38,9 @@ namespace Redis
 			this.host = host;
 			this.port = port;
 
-			this.contextPtr = redisConnect(host, port);
+			this.contextPtr = LibHiredis.redisConnect(host, port);
 
-			var context = (Context) Marshal.PtrToStructure(this.contextPtr, typeof(Context));
+			var context = (ContextStruct) Marshal.PtrToStructure(this.contextPtr, typeof(ContextStruct));
 
 			if (context.error == 0)
 				System.Console.WriteLine("Connected!");
@@ -59,92 +48,65 @@ namespace Redis
 				System.Console.WriteLine("ERROR: " + context.errstr);
 		}
 
-		[DllImport ("libhiredis")]
-		private static extern IntPtr redisConnect(string host, int port);
-
-		[DllImport ("libhiredis")]
-		private static extern IntPtr redisCommand(IntPtr context, string command);
-
-		[DllImport ("libhiredis")]
-		private static extern IntPtr redisCommand(IntPtr context, string command, string value, UIntPtr valueLen);
-
-		private string GetReplyString(Reply reply)
+		public void Dispose()
 		{
-			byte[] bytes = new byte[reply.len];
-			for (int i=0; i < reply.len; i++) {
-				bytes[i] = Marshal.ReadByte(reply.str, i);
-			}
-			return System.Text.Encoding.Default.GetString(bytes);
+			LibHiredis.redisFree(this.contextPtr);
 		}
 
-		public string SET(string key, string value)
+		private Reply Command(string command, string value)
 		{
-			var replyPtr = redisCommand(this.contextPtr, String.Format("SET {0} %b", key), value, (UIntPtr) value.Length);
-
-			if (replyPtr != IntPtr.Zero)
-			{
-				var reply = (Reply) Marshal.PtrToStructure(replyPtr, typeof(Reply));
-				return GetReplyString(reply);
-			}
-
-			return "ERROR";
+			var replyPtr = LibHiredis.redisCommand(this.contextPtr, command, value, (UIntPtr) value.Length);
+			return new Reply(replyPtr);
 		}
 
-		public string GET(string key)
+		private Reply Command(string command)
 		{
-			var replyPtr = redisCommand(this.contextPtr, "GET " + key);
-			
-			if (replyPtr != IntPtr.Zero)
-			{
-				var reply = (Reply) Marshal.PtrToStructure(replyPtr, typeof(Reply));
-
-				if (reply.type == ReplyType.String)
-				{
-					return GetReplyString(reply);
-				}
-			}
-
-			return "ERROR";
+			var replyPtr = LibHiredis.redisCommand(this.contextPtr, command);
+			return new Reply(replyPtr);
 		}
 
-		public string PING()
+		public Reply SET(string key, string value)
 		{
-			var replyPtr = redisCommand(this.contextPtr, "PING");
+			return Command("SET " + key + "%b", value);
+		}
 
-			if (replyPtr != IntPtr.Zero)
-			{
-				return "PONG";
-			} else
-			{
-				return "ERROR";
-			}
+		public Reply GET(string key)
+		{
+			return Command("GET " + key);
+		}
+
+		public Reply PING()
+		{
+			return Command("PING");
 		}
 
 		static int Main(string[] args)
 		{
-			var client = new Client("localhost", 6379);
+			using (var client = new Client("localhost", 6379))
+			{
+				int operations = 100;
 
-			int operations = 100000;
+				System.Console.WriteLine(String.Format("Performing {0} operations...", operations));
 
-			System.Console.WriteLine(String.Format("Performing {0} operations...", operations));
+				Stopwatch stopwatch = new Stopwatch();
 
-			Stopwatch stopwatch = new Stopwatch();
+				stopwatch.Start();
 
-			stopwatch.Start();
+				for (int i=0; i < operations; i++) {
+					using (var reply = client.PING())
+					{
+						Console.WriteLine(reply.String);
+					}
+				}
 
-			for (int i=0; i < operations; i++) {
-				//client.SET("KEY:" + i, "VALUE " + i);
-				client.PING();
+				stopwatch.Stop();
+
+				Console.WriteLine("Time elapsed: {0}", stopwatch.Elapsed);
+
+				var opsPerSec = operations / stopwatch.Elapsed.TotalSeconds;
+
+				Console.WriteLine("Operations per second: {0}", opsPerSec);
 			}
-
-			stopwatch.Stop();
-
-			Console.WriteLine("Time elapsed: {0}", stopwatch.Elapsed);
-
-			var opsPerSec = operations / stopwatch.Elapsed.TotalSeconds;
-
-			Console.WriteLine("Operations per second: {0}", opsPerSec);
-
 			return 0;
 		}
 	}
