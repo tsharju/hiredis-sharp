@@ -49,7 +49,10 @@ namespace Hiredis
 		internal static extern IntPtr redisCommand(IntPtr context, string command);
 
 		[DllImport ("libhiredis")]
-		internal static extern IntPtr redisCommand(IntPtr context, string command, string value, UIntPtr valueLen);
+		internal static extern IntPtr redisCommand(IntPtr context, string command, string key);
+
+		[DllImport ("libhiredis")]
+		internal static extern IntPtr redisCommand(IntPtr context, string command, string key, string value);
 
 		[DllImport ("libhiredis")]
 		internal static extern void freeReplyObject(IntPtr reply);

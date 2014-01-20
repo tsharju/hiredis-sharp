@@ -1,4 +1,5 @@
 using System;
+using System.Text;
 using System.Runtime.InteropServices;
 
 namespace Hiredis
@@ -54,37 +55,37 @@ namespace Hiredis
 			LibHiredis.redisFree(this.contextPtr);
 		}
 
-		private Reply Command(string command, string value)
-		{
-			var replyPtr = LibHiredis.redisCommand(this.contextPtr, command, value, (UIntPtr) value.Length);
-			return new Reply(replyPtr);
-		}
-
 		private Reply Command(string command)
 		{
 			var replyPtr = LibHiredis.redisCommand(this.contextPtr, command);
 			return new Reply(replyPtr);
 		}
 
+		private Reply Command(string command, string key)
+		{
+			var replyPtr = LibHiredis.redisCommand(this.contextPtr, command, key);
+			return new Reply(replyPtr);
+		}
+
+		private Reply Command(string command, string key, string value)
+		{
+			var replyPtr = LibHiredis.redisCommand(this.contextPtr, command, key, value);
+			return new Reply(replyPtr);
+		}
+
 		public Reply SET(string key, string value)
 		{
-			return Command("SET " + key + "%b", value);
+			return Command("SET %s %s", key, value);
 		}
 
 		public Reply GET(string key)
 		{
-			return Command("GET " + key);
+			return Command("GET %s", key);
 		}
 
 		public Reply DEL(string key)
 		{
-			return Command("DEL " + key);
-		}
-
-		public Reply DEL(string[] keys)
-		{
-			var keysString = String.Join(" ", keys);
-			return Command("DEL " + keysString);
+			return Command("DEL %s", key);
 		}
 
 		public Reply PING()
