@@ -9,28 +9,25 @@ public class HiredisExample
 		{
 			using (var client = new Client("localhost", 6379))
 			{
-				int operations = 100;
-
-				System.Console.WriteLine(String.Format("Performing {0} operations...", operations));
-
-				Stopwatch stopwatch = new Stopwatch();
-
-				stopwatch.Start();
-
-				for (int i=0; i < operations; i++) {
-					using (var reply = client.PING())
-					{
-						Console.WriteLine(reply.String);
-					}
+				using (var reply = client.SADD("set:test", "test"))
+				{
+					Console.WriteLine(reply.String);
 				}
 
-				stopwatch.Stop();
+				using (var reply = client.SCARD("set:test"))
+				{
+					Console.WriteLine(reply.Integer);
+				}
 
-				Console.WriteLine("Time elapsed: {0}", stopwatch.Elapsed);
-
-				var opsPerSec = operations / stopwatch.Elapsed.TotalSeconds;
-
-				Console.WriteLine("Operations per second: {0}", opsPerSec);
+				using (var reply = client.SMEMBERS("set:test"))
+				{
+					int i = 0;
+					foreach (var r in reply.Array())
+					{
+						System.Console.WriteLine("INDEX: {0} VALUE: {1}", i, r.String);
+						i++;
+					}
+				}
 			}
 			return 0;
 		}

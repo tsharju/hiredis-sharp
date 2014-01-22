@@ -1,5 +1,6 @@
 using System;
 using System.Text;
+using System.Collections.Generic;
 using System.Runtime.InteropServices;
 
 namespace Hiredis
@@ -14,14 +15,26 @@ namespace Hiredis
 		private ReplyStruct reply;
 
 		public string String { get { return reply.str; } }
+		public Int64 Integer { get { return reply.integer; } }
+
 		public ReplyType Type { get { return reply.type; } }
 
 		public Reply(IntPtr replyPtr)
 		{
 			this.replyPtr = replyPtr;
 
-			if (replyPtr != IntPtr.Zero)
+			if (replyPtr != IntPtr.Zero) {
 				this.reply = (ReplyStruct) Marshal.PtrToStructure(replyPtr, typeof(ReplyStruct));
+			}
+		}
+
+		public IEnumerable<Reply> Array()
+		{
+			for (int i=0; i < this.reply.elements; i++)
+			{
+				IntPtr replyPtr = Marshal.ReadIntPtr(this.reply.element, i * IntPtr.Size);
+				yield return new Reply(replyPtr);
+			}
 		}
 
 		public void Dispose()
@@ -86,6 +99,21 @@ namespace Hiredis
 		public Reply DEL(string key)
 		{
 			return Command("DEL %s", key);
+		}
+
+		public Reply SADD(string key, string value)
+		{
+			return Command("SADD %s %s", key, value);
+		}
+
+		public Reply SMEMBERS(string key)
+		{
+			return Command("SMEMBERS %s", key);
+		}
+
+		public Reply SCARD(string key)
+		{
+			return Command("SCARD %s", key);
 		}
 
 		public Reply PING()

@@ -33,7 +33,7 @@ namespace Hiredis
 		internal int len;
 		[MarshalAs(UnmanagedType.LPTStr)]
 		internal string str;
-		internal UIntPtr elements;
+		internal Int64 elements;
 		internal IntPtr element;
 	}
 
@@ -45,13 +45,13 @@ namespace Hiredis
 		[DllImport ("libhiredis")]
 		internal static extern IntPtr redisConnect(string host, int port);
 
-		[DllImport ("libhiredis")]
+		[DllImport ("libhiredis", CallingConvention=CallingConvention.Cdecl)]
 		internal static extern IntPtr redisCommand(IntPtr context, string command);
 
-		[DllImport ("libhiredis")]
+		[DllImport ("libhiredis", CallingConvention=CallingConvention.Cdecl)]
 		internal static extern IntPtr redisCommand(IntPtr context, string command, string key);
 
-		[DllImport ("libhiredis")]
+		[DllImport ("libhiredis", CallingConvention=CallingConvention.Cdecl)]
 		internal static extern IntPtr redisCommand(IntPtr context, string command, string key, string value);
 
 		[DllImport ("libhiredis")]
