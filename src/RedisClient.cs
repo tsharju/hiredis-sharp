@@ -39,7 +39,7 @@ namespace Hiredis
 
 		public void Dispose()
 		{
-			LibHiredis.freeReplyObject(this.replyPtr);
+			LibHiredis.FreeReplyObject(this.replyPtr);
 		}
 	}
 
@@ -55,7 +55,7 @@ namespace Hiredis
 			this.host = host;
 			this.port = port;
 
-			this.contextPtr = LibHiredis.redisConnect(host, port);
+			this.contextPtr = LibHiredis.RedisConnect(host, port);
 
 			var context = (ContextStruct) Marshal.PtrToStructure(this.contextPtr, typeof(ContextStruct));
 
@@ -65,24 +65,24 @@ namespace Hiredis
 
 		public void Dispose()
 		{
-			LibHiredis.redisFree(this.contextPtr);
+			LibHiredis.RedisFree(this.contextPtr);
 		}
 
 		private Reply Command(string command)
 		{
-			var replyPtr = LibHiredis.redisCommand(this.contextPtr, command);
+			var replyPtr = LibHiredis.RedisCommand(this.contextPtr, command);
 			return new Reply(replyPtr);
 		}
 
 		private Reply Command(string command, string key)
 		{
-			var replyPtr = LibHiredis.redisCommand(this.contextPtr, command, key);
+			var replyPtr = LibHiredis.RedisCommand(this.contextPtr, command, key);
 			return new Reply(replyPtr);
 		}
 
 		private Reply Command(string command, string key, string value)
 		{
-			var replyPtr = LibHiredis.redisCommand(this.contextPtr, command, key, value);
+			var replyPtr = LibHiredis.RedisCommand(this.contextPtr, command, key, value);
 			return new Reply(replyPtr);
 		}
 

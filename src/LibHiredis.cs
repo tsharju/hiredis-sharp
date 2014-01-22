@@ -39,22 +39,22 @@ namespace Hiredis
 
 	static internal class LibHiredis
 	{
-		[DllImport ("libhiredis")]
-		internal static extern void redisFree(IntPtr context);
+		[DllImport ("libhiredis", EntryPoint="redisFree")]
+		internal static extern void RedisFree(IntPtr context);
 
-		[DllImport ("libhiredis")]
-		internal static extern IntPtr redisConnect(string host, int port);
+		[DllImport ("libhiredis", EntryPoint="redisConnect")]
+		internal static extern IntPtr RedisConnect(string host, int port);
 
-		[DllImport ("libhiredis", CallingConvention=CallingConvention.Cdecl)]
-		internal static extern IntPtr redisCommand(IntPtr context, string command);
+		[DllImport ("libhiredis", EntryPoint="redisCommand", CallingConvention=CallingConvention.Cdecl)]
+		internal static extern IntPtr RedisCommand(IntPtr context, string command);
 
-		[DllImport ("libhiredis", CallingConvention=CallingConvention.Cdecl)]
-		internal static extern IntPtr redisCommand(IntPtr context, string command, string key);
+		[DllImport ("libhiredis", EntryPoint="redisCommand", CallingConvention=CallingConvention.Cdecl)]
+		internal static extern IntPtr RedisCommand(IntPtr context, string command, string key);
 
-		[DllImport ("libhiredis", CallingConvention=CallingConvention.Cdecl)]
-		internal static extern IntPtr redisCommand(IntPtr context, string command, string key, string value);
+		[DllImport ("libhiredis", EntryPoint="redisCommand", CallingConvention=CallingConvention.Cdecl)]
+		internal static extern IntPtr RedisCommand(IntPtr context, string command, string key, string value);
 
-		[DllImport ("libhiredis")]
-		internal static extern void freeReplyObject(IntPtr reply);
+		[DllImport ("libhiredis", EntryPoint="freeReplyObject")]
+		internal static extern void FreeReplyObject(IntPtr reply);
 	}
 }
