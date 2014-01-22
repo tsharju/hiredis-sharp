@@ -7,7 +7,7 @@ public class HiredisExample
 {
 	static int Main(string[] args)
 		{
-			using (var client = new Client("localhost", 6379))
+			using (var client = new RedisClient("localhost", 6379))
 			{
 				using (var reply = client.SADD("set:test", "test"))
 				{

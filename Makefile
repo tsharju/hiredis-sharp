@@ -2,7 +2,7 @@ all: lib example
 
 lib:
 	@mkdir -p build
-	@gmcs -t:library src/LibHiredis.cs src/RedisClient.cs -out:build/LibHiredis.dll
+	@gmcs -t:library src/LibHiredis.cs src/Hiredis.cs -out:build/LibHiredis.dll
 
 example: lib
 	@mkdir -p bin

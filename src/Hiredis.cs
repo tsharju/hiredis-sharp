@@ -9,7 +9,7 @@ namespace Hiredis
 		public ConnectionFailedException(string msg) : base(msg) {}
 	}
 
-	public class Reply : IDisposable
+	public class RedisReply : IDisposable
 	{
 		private IntPtr replyPtr;
 		private ReplyStruct reply;
@@ -19,7 +19,7 @@ namespace Hiredis
 
 		public ReplyType Type { get { return reply.type; } }
 
-		public Reply(IntPtr replyPtr)
+		public RedisReply(IntPtr replyPtr)
 		{
 			this.replyPtr = replyPtr;
 
@@ -28,12 +28,12 @@ namespace Hiredis
 			}
 		}
 
-		public IEnumerable<Reply> Array()
+		public IEnumerable<RedisReply> Array()
 		{
 			for (int i=0; i < this.reply.elements; i++)
 			{
 				IntPtr replyPtr = Marshal.ReadIntPtr(this.reply.element, i * IntPtr.Size);
-				yield return new Reply(replyPtr);
+				yield return new RedisReply(replyPtr);
 			}
 		}
 
@@ -43,14 +43,14 @@ namespace Hiredis
 		}
 	}
 
-	public class Client : IDisposable
+	public class RedisClient : IDisposable
 	{
 		public string host;
 		public int port;
 
 		private IntPtr contextPtr;
 
-		public Client(string host, int port)
+		public RedisClient(string host, int port)
 		{
 			this.host = host;
 			this.port = port;
@@ -68,57 +68,58 @@ namespace Hiredis
 			LibHiredis.RedisFree(this.contextPtr);
 		}
 
-		private Reply Command(string command)
+		private RedisReply RedisCommand(string command)
 		{
 			var replyPtr = LibHiredis.RedisCommand(this.contextPtr, command);
-			return new Reply(replyPtr);
+			return new RedisReply(replyPtr);
 		}
 
-		private Reply Command(string command, string key)
+		private RedisReply RedisCommand(string command, string key)
 		{
 			var replyPtr = LibHiredis.RedisCommand(this.contextPtr, command, key);
-			return new Reply(replyPtr);
+			return new RedisReply(replyPtr);
 		}
 
-		private Reply Command(string command, string key, string value)
+		private RedisReply RedisCommand(string command, string key, string value)
 		{
 			var replyPtr = LibHiredis.RedisCommand(this.contextPtr, command, key, value);
-			return new Reply(replyPtr);
+			return new RedisReply(replyPtr);
 		}
 
-		public Reply SET(string key, string value)
+		public RedisReply SET(string key, string value)
 		{
-			return Command("SET %s %s", key, value);
+			return RedisCommand("SET %s %s", key, value);
 		}
 
-		public Reply GET(string key)
+		public RedisReply GET(string key)
 		{
-			return Command("GET %s", key);
+			return RedisCommand("GET %s", key);
 		}
 
-		public Reply DEL(string key)
+		public RedisReply DEL(string key)
 		{
-			return Command("DEL %s", key);
+			return RedisCommand("DEL %s", key);
 		}
 
-		public Reply SADD(string key, string value)
+		public RedisReply SADD(string key, string value)
 		{
-			return Command("SADD %s %s", key, value);
+			return RedisCommand("SADD %s %s", key, value);
 		}
 
-		public Reply SMEMBERS(string key)
+		public RedisReply SMEMBERS(string key)
 		{
-			return Command("SMEMBERS %s", key);
+
+			return RedisCommand("SMEMBERS %s", key);
 		}
 
-		public Reply SCARD(string key)
+		public RedisReply SCARD(string key)
 		{
-			return Command("SCARD %s", key);
+			return RedisCommand("SCARD %s", key);
 		}
 
-		public Reply PING()
+		public RedisReply PING()
 		{
-			return Command("PING");
+			return RedisCommand("PING");
 		}
 	}
 }
