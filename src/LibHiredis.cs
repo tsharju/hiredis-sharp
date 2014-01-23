@@ -54,6 +54,18 @@ namespace Hiredis
 		[DllImport ("libhiredis", EntryPoint="redisCommand", CallingConvention=CallingConvention.Cdecl)]
 		internal static extern IntPtr RedisCommand(IntPtr context, string command, string key, string value);
 
+		[DllImport ("libhiredis", EntryPoint="redisAppendCommand", CallingConvention=CallingConvention.Cdecl)]
+		internal static extern void RedisAppendCommand(IntPtr context, string command);
+
+		[DllImport ("libhiredis", EntryPoint="redisAppendCommand", CallingConvention=CallingConvention.Cdecl)]
+		internal static extern void RedisAppendCommand(IntPtr context, string command, string key);
+
+		[DllImport ("libhiredis", EntryPoint="redisAppendCommand", CallingConvention=CallingConvention.Cdecl)]
+		internal static extern void RedisAppendCommand(IntPtr context, string command, string key, string value);
+
+		[DllImport ("libhiredis", EntryPoint="redisGetReply")]
+		internal static extern int RedisGetReply(IntPtr context, IntPtr reply);
+
 		[DllImport ("libhiredis", EntryPoint="freeReplyObject")]
 		internal static extern void FreeReplyObject(IntPtr reply);
 	}
