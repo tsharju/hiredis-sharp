@@ -50,7 +50,7 @@ public class HiredisExample
 				{
 					using (var reply = client.GetReply())
 					{
-						Console.WriteLine("REPLY {0}: {1}", i, reply.Type);
+						Console.WriteLine("REPLY {0}: {1}", i, reply.String);
 					}
 				}
 

@@ -126,7 +126,7 @@ namespace Hiredis
 			IntPtr replyPtr = Marshal.AllocHGlobal(Marshal.SizeOf(typeof(ReplyStruct)));
 			Marshal.StructureToPtr(new ReplyStruct(), replyPtr, false);
 
-			var result = LibHiredis.RedisGetReply(this.contextPtr, replyPtr);
+			var result = LibHiredis.RedisGetReply(this.contextPtr, ref replyPtr);
 
 			if (result == 0)
 				return new RedisReply(replyPtr);
