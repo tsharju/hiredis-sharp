@@ -58,67 +58,76 @@ namespace Hiredis
 
 	public class RedisClient : IDisposable
 	{
-		public string host;
-		public int port;
+		public string Host;
+		public int Port;
+		public bool Connected = false;
 
-		protected IntPtr contextPtr;
+		protected IntPtr ContextPtr;
 
-		public RedisClient(string host, int port)
+		public RedisClient(string host, int port, bool connect=true)
 		{
-			this.host = host;
-			this.port = port;
+			this.Host = host;
+			this.Port = port;
 
-			this.contextPtr = LibHiredis.RedisConnect(host, port);
+			if (connect)
+				this.Connect();
+		}
 
-			var context = (ContextStruct) Marshal.PtrToStructure(this.contextPtr, typeof(ContextStruct));
+		public void Connect()
+		{
+			this.ContextPtr = LibHiredis.RedisConnect(this.Host, this.Port);
+
+			var context = (ContextStruct) Marshal.PtrToStructure(this.ContextPtr, typeof(ContextStruct));
 
 			if (context.error != 0)
 				throw new ConnectionFailedException(context.errstr);
+			else
+				this.Connected = true;
 		}
 
 		~RedisClient()
 		{
-			if (this.contextPtr != IntPtr.Zero)
+			if (this.ContextPtr != IntPtr.Zero)
 				Dispose();
 		}
 
 		public void Dispose()
 		{
-			LibHiredis.RedisFree(this.contextPtr);
-			this.contextPtr = IntPtr.Zero;
+			LibHiredis.RedisFree(this.ContextPtr);
+			this.ContextPtr = IntPtr.Zero;
 		}
 
 		public RedisReply Command(string command)
 		{
-			var replyPtr = LibHiredis.RedisCommand(this.contextPtr, command);
+			var replyPtr = LibHiredis.RedisCommand(this.ContextPtr, command);
 			return new RedisReply(replyPtr);
 		}
 
 		public RedisReply Command(string command, string key)
 		{
-			var replyPtr = LibHiredis.RedisCommand(this.contextPtr, command, key);
+			var replyPtr = LibHiredis.RedisCommand(this.ContextPtr, command, key);
 			return new RedisReply(replyPtr);
 		}
 
 		public RedisReply Command(string command, string key, string value)
 		{
-			var replyPtr = LibHiredis.RedisCommand(this.contextPtr, command, key, value);
+			var replyPtr = LibHiredis.RedisCommand(this.ContextPtr, command, key, value);
 			return new RedisReply(replyPtr);
 		}
 
 		public void AppendCommand(string command)
 		{
-			LibHiredis.RedisAppendCommand(this.contextPtr, command);
+			LibHiredis.RedisAppendCommand(this.ContextPtr, command);
 		}
 
 		public void AppendCommand(string command, string key)
 		{
-			LibHiredis.RedisAppendCommand(this.contextPtr, command, key);
+			LibHiredis.RedisAppendCommand(this.ContextPtr, command, key);
 		}
 
 		public void AppendCommand(string command, string key, string value)
 		{
-			LibHiredis.RedisAppendCommand(this.contextPtr, command, key, value);
+			LibHiredis.RedisAppendCommand(this.ContextPtr, command, key, value);
 		}
 
 		public RedisReply GetReply()
@@ -126,7 +135,7 @@ namespace Hiredis
 			IntPtr replyPtr = Marshal.AllocHGlobal(Marshal.SizeOf(typeof(ReplyStruct)));
 			Marshal.StructureToPtr(new ReplyStruct(), replyPtr, false);
 
-			var result = LibHiredis.RedisGetReply(this.contextPtr, ref replyPtr);
+			var result = LibHiredis.RedisGetReply(this.ContextPtr, ref replyPtr);
 
 			if (result == 0)
 				return new RedisReply(replyPtr);
