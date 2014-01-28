@@ -43,3 +43,8 @@ To debug the problem you can run the previous command again and set the Mono log
 ```
 MONO_LOG_LEVEL=debug mono build/Example.exe
 ```
+
+> A common problem on OS X is that the Mono binary distribution for OS X that you can download from Mono website,
+> is 32bit and if you install `libhiredis` for example using Homebrew, it is built 64bit. In this case you will
+> get the `System.DllNotFoundException` even you have `libhiredis` installed. To fix this you can build mono from
+> sources and make sure it is 64bit.
