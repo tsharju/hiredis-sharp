@@ -1,13 +1,22 @@
-all: lib example
+CC = mcs
+SOURCEDIR = src
+SOURCES := $(shell find $(SOURCEDIR) -name '*.cs')
+LIB = build/LibHiredis.dll
+EXE = build/Example.exe
 
-lib:
-	@mkdir -p build
-	@gmcs -t:library src/LibHiredis.cs src/Hiredis.cs src/ConnectionPool.cs -out:build/LibHiredis.dll
 
-example: lib
-	@mkdir -p bin
-	@gmcs -r:build/LibHiredis.dll src/Example.cs -out:build/Example.exe
+all: $(LIB)
+
+$(LIB): $(SOURCES)
+	$(CC) -t:library $(SOURCES) -out:$(LIB)
+
+$(EXE): $(LIB)
+	$(CC) -r:$(LIB) examples/Example.cs -out:$(EXE)
+
+example: $(EXE)
 
 clean:
 	@rm -rf build/*.dll
 	@rm -rf build/*.exe
+
+.PHONY: all example clean
