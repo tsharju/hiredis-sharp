@@ -6,7 +6,7 @@ C# Redis driver that uses `libhiredis`.
 Building
 ========
 
-Like the name already hints building `hiredis-sharp` requires `libhiredis`. So far there have not been any attemts on building this library for Windows platform. It is mainly intended for use with the Mono Framework running on Linux or OS X.
+Like the name already hints, building `hiredis-sharp` requires `libhiredis`. So far there have not been any attemts on building this library for Windows platform. It is mainly intended for use with the Mono Framework running on Linux or OS X.
 
 Make rule you have `libhiredis` installed and in the project directory type:
 
