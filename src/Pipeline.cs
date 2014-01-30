@@ -64,7 +64,7 @@ namespace Hiredis
 			var result = LibHiredis.RedisGetReply(this.Client.ContextPtr, ref replyPtr);
 
 			if (result == 0)
-				return new RedisReply(replyPtr);
+				return this.Client.CheckForError(new RedisReply(replyPtr));
 			else
 				throw new Exception(); // something went wrong
 		}

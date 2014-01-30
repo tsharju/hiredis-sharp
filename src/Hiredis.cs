@@ -9,6 +9,10 @@ namespace Hiredis
 		public ConnectionFailedException(string msg) : base(msg) {}
 	}
 
+	public class CommandFailedException : System.Exception {
+		public CommandFailedException(string msg) : base(msg) {}
+	}
+
 	public class RedisReply : IDisposable
 	{
 		private IntPtr replyPtr;
@@ -97,6 +101,18 @@ namespace Hiredis
 			this.ContextPtr = IntPtr.Zero;
 		}
 
+		internal RedisReply CheckForError(RedisReply reply)
+		{
+			if (reply.Type == ReplyType.Error)
+			{
+				throw new CommandFailedException(reply.String);
+			}
+			else
+			{
+				return reply;
+			}
+		}
+
 		public RedisPipeline GetPipeline()
 		{
 			return new RedisPipeline(this);
@@ -105,19 +121,19 @@ namespace Hiredis
 		public RedisReply Command(string command)
 		{
 			var replyPtr = LibHiredis.RedisCommand(this.ContextPtr, command);
-			return new RedisReply(replyPtr);
+			return this.CheckForError(new RedisReply(replyPtr));
 		}
 
 		public RedisReply Command(string command, string key)
 		{
 			var replyPtr = LibHiredis.RedisCommand(this.ContextPtr, command, key);
-			return new RedisReply(replyPtr);
+			return this.CheckForError(new RedisReply(replyPtr));
 		}
 
 		public RedisReply Command(string command, string key, string value)
 		{
 			var replyPtr = LibHiredis.RedisCommand(this.ContextPtr, command, key, value);
-			return new RedisReply(replyPtr);
+			return this.CheckForError(new RedisReply(replyPtr));
 		}
 	}
 }
