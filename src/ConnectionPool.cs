@@ -3,6 +3,10 @@ using System.Collections.Concurrent;
 
 namespace Hiredis
 {
+	public class ConnectionPoolTimeout : System.Exception {
+		public ConnectionPoolTimeout(string msg) : base(msg) {}
+	}
+
 	public class PooledRedisClient : RedisClient, IDisposable
 	{
 		private RedisConnectionPool Pool;
@@ -24,8 +28,6 @@ namespace Hiredis
 		public readonly string Host;
 		public readonly int Port;
 
-		public const int GET_CLIENT_TIMEOUT = 500; // milliseconds
-
 		private BlockingCollection<PooledRedisClient> Pool;
 
 		public RedisConnectionPool(string host, int port, int maxSize=5)
@@ -42,11 +44,11 @@ namespace Hiredis
 			}
 		}
 
-		public PooledRedisClient GetClient()
+		public PooledRedisClient GetClient(int timeout=-1)
 		{
 			PooledRedisClient client;
 
-			if (this.Pool.TryTake(out client, GET_CLIENT_TIMEOUT))
+			if (this.Pool.TryTake(out client, timeout))
 			{
 				if (!client.Connected)
 					client.Connect();
@@ -55,7 +57,8 @@ namespace Hiredis
 			}
 			else
 			{
-				throw new Exception(); // waited for a client too long
+				throw new ConnectionPoolTimeout(
+					String.Format("Could not get client from pool in {0} ms. Increase pool size maybe?", timeout));
 			}
 		}
 
