@@ -62,7 +62,7 @@ namespace Hiredis
 		public int Port;
 		public bool Connected = false;
 
-		protected IntPtr ContextPtr;
+		internal IntPtr ContextPtr;
 
 		public RedisClient(string host, int port, bool connect=true)
 		{
@@ -97,6 +97,11 @@ namespace Hiredis
 			this.ContextPtr = IntPtr.Zero;
 		}
 
+		public RedisPipeline GetPipeline()
+		{
+			return new RedisPipeline(this);
+		}
+
 		public RedisReply Command(string command)
 		{
 			var replyPtr = LibHiredis.RedisCommand(this.ContextPtr, command);
@@ -113,34 +118,6 @@ namespace Hiredis
 		{
 			var replyPtr = LibHiredis.RedisCommand(this.ContextPtr, command, key, value);
 			return new RedisReply(replyPtr);
-		}
-
-		public void AppendCommand(string command)
-		{
-			LibHiredis.RedisAppendCommand(this.ContextPtr, command);
-		}
-
-		public void AppendCommand(string command, string key)
-		{
-			LibHiredis.RedisAppendCommand(this.ContextPtr, command, key);
-		}
-
-		public void AppendCommand(string command, string key, string value)
-		{
-			LibHiredis.RedisAppendCommand(this.ContextPtr, command, key, value);
-		}
-
-		public RedisReply GetReply()
-		{
-			IntPtr replyPtr = Marshal.AllocHGlobal(Marshal.SizeOf(typeof(ReplyStruct)));
-			Marshal.StructureToPtr(new ReplyStruct(), replyPtr, false);
-
-			var result = LibHiredis.RedisGetReply(this.ContextPtr, ref replyPtr);
-
-			if (result == 0)
-				return new RedisReply(replyPtr);
-			else
-				throw new Exception(); // something went wrong
 		}
 	}
 }

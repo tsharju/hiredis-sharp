@@ -9,7 +9,7 @@ public class HiredisExample
 {
 	static int Main(string[] args)
 	{
-		/*using (var client = new RedisClient("localhost", 6379))
+		using (var client = new RedisClient("localhost", 6379))
 		{
 			// Simple SET and GET example
 			Console.WriteLine("=== Test SET and GET ===");
@@ -27,37 +27,27 @@ public class HiredisExample
 			Console.WriteLine("=== Test pipeline ===");
 
 			// Do a few pipelined SET operations
-			for (int i=0; i < 10; i++)
-				client.AppendCommand("SET %s %s", String.Format("pipeline:test:{0}", i), String.Format("test:{0}", i));
-
-			// Get replys	
-			for (int i=0; i < 10; i++)
+			using (var pipeline1 = client.GetPipeline())
 			{
-				using (var reply = client.GetReply())
-				{
-					Console.WriteLine("REPLY {0}: {1}", i, reply.Integer);
-				}
+				for (int i=0; i < 10; i++)
+					pipeline1.AppendCommand("SET %s %s", String.Format("pipeline:test:{0}", i), String.Format("test:{0}", i));
+			}
+
+			// How to get replys for pipelined commands
+			var pipeline2 = client.GetPipeline();
+			
+			pipeline2.AppendCommand("SET %s %s", "pipeline:enum:test:0", "test:0");
+			pipeline2.AppendCommand("SET %s %s", "pipeline:enum:test:1", "test:1");
+			pipeline2.AppendCommand("GET %s", "pipeline:enum:test:0");
+			pipeline2.AppendCommand("GET %s", "pipeline:enum:test:1");
+
+			foreach (var reply in pipeline2.FlushEnum())
+			{
+				Console.WriteLine("REPLY: {0}", reply.String);
 			}
 
 			Console.WriteLine("");
-
-			// Do a few pipelined GET operations
-			for (int i=0; i < 10; i++)
-			{
-				client.AppendCommand("GET %s", String.Format("pipeline:test:{0}", i));
-			}
-
-			// Get replys
-			for (int i=0; i < 10; i++)
-			{
-				using (var reply = client.GetReply())
-				{
-					Console.WriteLine("REPLY {0}: {1}", i, reply.String);
-				}
-			}
-
-			Console.WriteLine("");
-		}*/
+		}
 
 		var connectionPool = new RedisConnectionPool("localhost", 6379);
 
@@ -85,16 +75,17 @@ public class HiredisExample
 		RedisConnectionPool connectionPool = (RedisConnectionPool) data;
 
 		// Do a few pipelined SET operations
-		for (int i=0; i < 100000; i++)
+		for (int i=0; i < 1000; i++)
 		{
 			var key = String.Format("pool:test:{0}", i);
 
 			using (var client = connectionPool.GetClient())
 			{
-				client.AppendCommand("SET %s %s", key, String.Format("pool:data:{0}", i));
-				client.AppendCommand("EXPIRE %s %s", key, "5");
-				client.GetReply();
-				client.GetReply();
+				using (var pipeline = client.GetPipeline())
+				{
+					pipeline.AppendCommand("SET %s %s", key, String.Format("pool:data:{0}", i));
+					pipeline.AppendCommand("EXPIRE %s %s", key, "5");
+				}
 			}
 		}
 	}
