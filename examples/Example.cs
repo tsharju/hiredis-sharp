@@ -47,6 +47,21 @@ public class HiredisExample
 			}
 
 			Console.WriteLine("");
+
+			// Set example
+			using (var reply1 = client.Command("SADD %s %s", "smembers:test", "item1"))
+			using (var reply2 = client.Command("SADD %s %s", "smembers:test", "item2"))
+			{
+				Console.WriteLine("REPLY 1: {0}", reply1.String);
+				Console.WriteLine("REPLY 2: {0}", reply2.String);
+			}
+			using (var reply = client.Command("SMEMBERS %s", "smembers:test"))
+			{
+				foreach (var member in reply.Array)
+				{
+					Console.WriteLine("MEMBER: {0}", member.String);
+				}
+			}
 		}
 
 		var connectionPool = new RedisConnectionPool("localhost", 6379);
