@@ -145,9 +145,9 @@ namespace Hiredis
 			return new RedisPipeline(this);
 		}
 
-		public RedisReply CommandArgv(string[] command)
+		public RedisReply Command(params string[] argv)
 		{
-			var replyPtr = LibHiredis.RedisCommandArgv(this.ContextPtr, command.Length, command, null);
+			var replyPtr = LibHiredis.RedisCommandArgv(this.ContextPtr, argv.Length, argv, null);
 			return this.CheckForError(new RedisReply(replyPtr));
 		}
 

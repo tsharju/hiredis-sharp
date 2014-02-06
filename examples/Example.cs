@@ -52,22 +52,28 @@ public class HiredisExample
 			using (var reply1 = client.Command("SADD %s %s", "smembers:test", "item1"))
 			using (var reply2 = client.Command("SADD %s %s", "smembers:test", "item2"))
 			{
-				Console.WriteLine("REPLY 1: {0}", reply1.String);
-				Console.WriteLine("REPLY 2: {0}", reply2.String);
+				Console.WriteLine("REPLY 1: {0}", reply1.Type);
+				Console.WriteLine("REPLY 2: {0}", reply2.Type);
 			}
 			using (var reply = client.Command("SMEMBERS %s", "smembers:test"))
 			{
 				foreach (var member in reply.Array)
 				{
-					Console.WriteLine("MEMBER: {0}", member.String);
+					Console.WriteLine("MEMBER: {0}", member.Type);
 				}
 			}
 
-			string[] command = {"MSET", "test1", "test1", "test2", "test2"};
-
-			using (var reply = client.CommandArgv(command))
+			using (var reply = client.Command(new string[] {"MSET", "test1", "test1", "test2", "test2"}))
 			{
-				Console.WriteLine("REPLY: {0}", reply.String);
+				Console.WriteLine("REPLY: {0}", reply.Type);
+			}
+
+			using (var reply = client.Command("MGET", "test1", "test2", "test3"))
+			{
+				foreach (var member in reply.Array)
+				{
+					Console.WriteLine("REPLY: {0}", member.Type);
+				}
 			}
 		}
 
