@@ -66,6 +66,9 @@ namespace Hiredis
 		[DllImport ("libhiredis", EntryPoint="redisGetReply")]
 		internal static extern int RedisGetReply(IntPtr context, ref IntPtr reply);
 
+		[DllImport ("libhiredis", EntryPoint="redisCommandArgv")]
+		internal static extern IntPtr RedisCommandArgv(IntPtr context, int argc, [In] string[] argv, IntPtr? argvlen);
+
 		[DllImport ("libhiredis", EntryPoint="freeReplyObject")]
 		internal static extern void FreeReplyObject(IntPtr reply);
 	}

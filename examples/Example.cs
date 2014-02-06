@@ -62,9 +62,16 @@ public class HiredisExample
 					Console.WriteLine("MEMBER: {0}", member.String);
 				}
 			}
+
+			string[] command = {"MSET", "test1", "test1", "test2", "test2"};
+
+			using (var reply = client.CommandArgv(command))
+			{
+				Console.WriteLine("REPLY: {0}", reply.String);
+			}
 		}
 
-		var connectionPool = new RedisConnectionPool("localhost", 6379);
+		/*var connectionPool = new RedisConnectionPool("localhost", 6379);
 
 		List<Thread> threads = new List<Thread>();
 
@@ -80,7 +87,7 @@ public class HiredisExample
 		foreach (var thread in threads)
 		{
 			thread.Join();
-		}
+		}*/
 
 		return 0;
 	}
