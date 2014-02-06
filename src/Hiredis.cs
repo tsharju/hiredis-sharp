@@ -37,17 +37,31 @@ namespace Hiredis
 
 		~RedisReply()
 		{
-			if (replyPtr != IntPtr.Zero)
-				Dispose();
+			Dispose(false);
 		}
 
 		public void Dispose()
 		{
-			if (!this.nested) {
-				// nested reply objects get freed when their parent gets freed
-				LibHiredis.FreeReplyObject(this.replyPtr);
+			Dispose(true);
+			GC.SuppressFinalize(this);
+		}
+
+		protected virtual void Dispose(bool disposing)
+		{
+			if (disposing)
+			{
+				// nothing to dispose here really
 			}
-			this.replyPtr = IntPtr.Zero;
+
+			if (replyPtr != IntPtr.Zero)
+			{
+				// reply objects inside array get freed when the array is freed
+				if (!this.nested)
+				{
+					LibHiredis.FreeReplyObject(this.replyPtr);
+				}
+				this.replyPtr = IntPtr.Zero;
+			}
 		}
 
 		private IEnumerable<RedisReply> ArrayEnum()
@@ -55,7 +69,7 @@ namespace Hiredis
 			for (int i=0; i < this.reply.elements; i++)
 			{
 				IntPtr replyPtr = Marshal.ReadIntPtr(this.reply.element, i * IntPtr.Size);
-				yield return new RedisReply(replyPtr, true);
+				yield return new RedisReply(replyPtr, true); // a nested reply
 			}
 		}
 	}
@@ -91,14 +105,27 @@ namespace Hiredis
 
 		~RedisClient()
 		{
-			if (this.ContextPtr != IntPtr.Zero)
-				Dispose();
+			Dispose(false);
 		}
 
 		public void Dispose()
 		{
-			LibHiredis.RedisFree(this.ContextPtr);
-			this.ContextPtr = IntPtr.Zero;
+			Dispose(true);
+			GC.SuppressFinalize(this);
+		}
+
+		protected virtual void Dispose(bool disposing)
+		{
+			if (disposing)
+			{
+				this.Host = null;
+			}
+
+			if (this.ContextPtr != IntPtr.Zero)
+			{
+				LibHiredis.RedisFree(this.ContextPtr);
+				this.ContextPtr = IntPtr.Zero;
+			}
 		}
 
 		internal RedisReply CheckForError(RedisReply reply)
