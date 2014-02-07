@@ -48,3 +48,48 @@ MONO_LOG_LEVEL=debug mono build/Example.exe
 > is 32bit and if you install `libhiredis` for example using Homebrew, it is built 64bit. In this case you will
 > get the `System.DllNotFoundException` even you have `libhiredis` installed. To fix this you can build mono from
 > sources and make sure it is 64bit.
+
+API
+===
+
+The API is pretty much the same as using `libhiredis` from C. However, there are some stuff that make things easier, like the `Hiredis.RedisPipeline` or the `Hiredis.RedisConnectionPool` class. Anyways the API is really simple.
+
+Connecting
+----------
+
+All you need to do is create a new `Hiredis.RedisClient` object.
+
+```c#
+using Hiredis;
+
+RedisClient client = new RedisClient("localhost", 6379);
+```
+
+`Hiredis.RedisClient` implements `IDisposable` so it is very much recommended to use it inside a `using` block so that the resourses get released properly. Like this...
+
+```c#
+using Hiredis;
+
+using (var client = new RedisClient("localhost", 6379))
+{
+  // do your thing
+}
+```
+
+> Another option is to call `RedisClient.Dispose()` after you're done with it.
+
+Using Connection Pool
+---------------------
+
+`Hiredis.RedisConnectionPool` implements a thread safe connection pooling. Use it like this...
+
+```c#
+using Hiredis;
+
+RedisConnectionPool connectionPool = new RedisConnectionPool("localhost", 6379);
+
+using (var client = connectionPool.GetClient())
+{
+  // do your thing
+}
+```
