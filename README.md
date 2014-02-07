@@ -93,3 +93,23 @@ using (var client = connectionPool.GetClient())
   // do your thing
 }
 ```
+
+Redis Commands
+--------------
+
+Issuing commands to Redis is really simple. You just call either `RedisClient.Command` or `RedisPipeline.AppendCommand` methods and get back a `RedisReply`. For full list of commands see [Redis command reference](http://redis.io/commands). Here are few examples.
+
+```c#
+using System;
+using Hiredis;
+
+using (var client = new RedisClient("localhost", 6379))
+{
+  using (var reply1 = client.Command("SET", "key", "value"))
+  using (var reply2 = client.Command("GET", "key"))
+  {
+    Console.WriteLine("Reply 1: {0}", reply1.Type);
+    Console.WriteLine("Reply 2: {0}", reply2.String);
+  }
+}
+```
