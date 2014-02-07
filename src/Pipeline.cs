@@ -46,13 +46,21 @@ namespace Hiredis
 
 		public void AppendCommand(string command, string key)
 		{
-			LibHiredis.RedisAppendCommand(this.Client.ContextPtr, command, key);
+			var cmd = String.Format("{0} %s", command);
+			LibHiredis.RedisAppendCommand(this.Client.ContextPtr, cmd, key);
 			this.OpCount++;
 		}
 
 		public void AppendCommand(string command, string key, string value)
 		{
-			LibHiredis.RedisAppendCommand(this.Client.ContextPtr, command, key, value);
+			var cmd = String.Format("{0} %s %s", command);
+			LibHiredis.RedisAppendCommand(this.Client.ContextPtr, cmd, key, value);
+			this.OpCount++;
+		}
+
+		public void AppendCommand(params string[] argv)
+		{
+			LibHiredis.RedisAppendCommandArgv(this.Client.ContextPtr, argv.Length, argv, null);
 			this.OpCount++;
 		}
 

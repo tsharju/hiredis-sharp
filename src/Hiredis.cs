@@ -145,12 +145,6 @@ namespace Hiredis
 			return new RedisPipeline(this);
 		}
 
-		public RedisReply Command(params string[] argv)
-		{
-			var replyPtr = LibHiredis.RedisCommandArgv(this.ContextPtr, argv.Length, argv, null);
-			return this.CheckForError(new RedisReply(replyPtr));
-		}
-
 		public RedisReply Command(string command)
 		{
 			var replyPtr = LibHiredis.RedisCommand(this.ContextPtr, command);
@@ -159,13 +153,21 @@ namespace Hiredis
 
 		public RedisReply Command(string command, string key)
 		{
-			var replyPtr = LibHiredis.RedisCommand(this.ContextPtr, command, key);
+			var cmd = String.Format("{0} %s", command);
+			var replyPtr = LibHiredis.RedisCommand(this.ContextPtr, cmd, key);
 			return this.CheckForError(new RedisReply(replyPtr));
 		}
 
 		public RedisReply Command(string command, string key, string value)
 		{
-			var replyPtr = LibHiredis.RedisCommand(this.ContextPtr, command, key, value);
+			var cmd = String.Format("{0} %s %s", command);
+			var replyPtr = LibHiredis.RedisCommand(this.ContextPtr, cmd, key, value);
+			return this.CheckForError(new RedisReply(replyPtr));
+		}
+
+		public RedisReply Command(params string[] argv)
+		{
+			var replyPtr = LibHiredis.RedisCommandArgv(this.ContextPtr, argv.Length, argv, null);
 			return this.CheckForError(new RedisReply(replyPtr));
 		}
 	}

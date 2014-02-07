@@ -14,8 +14,8 @@ public class HiredisExample
 			// Simple SET and GET example
 			Console.WriteLine("=== Test SET and GET ===");
 
-			using (var reply1 = client.Command("SET %s %s", "set:test", "test"))
-			using (var reply2 = client.Command("GET %s", "set:test"))
+			using (var reply1 = client.Command("SET", "set:test", "test"))
+			using (var reply2 = client.Command("GET", "set:test"))
 			{
 				Console.WriteLine("REPLY 1: {0}", reply1.String);
 				Console.WriteLine("REPLY 2: {0}", reply2.String);
@@ -30,16 +30,16 @@ public class HiredisExample
 			using (var pipeline1 = client.GetPipeline())
 			{
 				for (int i=0; i < 10; i++)
-					pipeline1.AppendCommand("SET %s %s", String.Format("pipeline:test:{0}", i), String.Format("test:{0}", i));
+					pipeline1.AppendCommand("SET", String.Format("pipeline:test:{0}", i), String.Format("test:{0}", i));
 			}
 
 			// How to get replys for pipelined commands
 			var pipeline2 = client.GetPipeline();
 			
-			pipeline2.AppendCommand("SET %s %s", "pipeline:enum:test:0", "test:0");
-			pipeline2.AppendCommand("SET %s %s", "pipeline:enum:test:1", "test:1");
-			pipeline2.AppendCommand("GET %s", "pipeline:enum:test:0");
-			pipeline2.AppendCommand("GET %s", "pipeline:enum:test:1");
+			pipeline2.AppendCommand("SET", "pipeline:enum:test:0", "test:0");
+			pipeline2.AppendCommand("SET", "pipeline:enum:test:1", "test:1");
+			pipeline2.AppendCommand("GET", "pipeline:enum:test:0");
+			pipeline2.AppendCommand("GET", "pipeline:enum:test:1");
 
 			foreach (var reply in pipeline2.FlushEnum())
 			{
@@ -49,13 +49,15 @@ public class HiredisExample
 			Console.WriteLine("");
 
 			// Set example
-			using (var reply1 = client.Command("SADD %s %s", "smembers:test", "item1"))
-			using (var reply2 = client.Command("SADD %s %s", "smembers:test", "item2"))
+			using (var reply1 = client.Command("SADD", "smembers:test", "item1"))
+			using (var reply2 = client.Command("SADD", "smembers:test", "item2"))
+			using (var reply3 = client.Command("EXPIRE", "smembers:test", "60"))
 			{
 				Console.WriteLine("REPLY 1: {0}", reply1.Type);
 				Console.WriteLine("REPLY 2: {0}", reply2.Type);
+				Console.WriteLine("REPLY 2: {0}", reply3.Type);
 			}
-			using (var reply = client.Command("SMEMBERS %s", "smembers:test"))
+			using (var reply = client.Command("SMEMBERS", "smembers:test"))
 			{
 				foreach (var member in reply.Array)
 				{
@@ -74,6 +76,13 @@ public class HiredisExample
 				{
 					Console.WriteLine("REPLY: {0}", member.Type);
 				}
+			}
+
+			using (var reply1 = client.Command(new string[] {"SET", "setrange:test", "Hello World"}))
+			using (var reply2 = client.Command("SETRANGE", "setrange:test", "6", "Redis"))
+			{
+				Console.WriteLine("REPLY: {0}", reply1.String);
+				Console.WriteLine("REPLY: {0}", reply2.Integer);
 			}
 		}
 
@@ -111,8 +120,8 @@ public class HiredisExample
 			{
 				using (var pipeline = client.GetPipeline())
 				{
-					pipeline.AppendCommand("SET %s %s", key, String.Format("pool:data:{0}", i));
-					pipeline.AppendCommand("EXPIRE %s %s", key, "5");
+					pipeline.AppendCommand("SET", key, String.Format("pool:data:{0}", i));
+					pipeline.AppendCommand("EXPIRE", key, "5");
 				}
 			}
 		}
