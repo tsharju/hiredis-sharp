@@ -17,7 +17,7 @@ make
 That's it. The build will succeed whether you had `libhiredis` properly installed or not. To test whether the library works on your system you can build a simple example and try to run it. To do that, type:
 
 ```
-make example
+make examples
 ```
 
 Now you should have an EXE file called `Example.exe` in the `/build` directory. Make sure you have Redis server running in localhost and run this command:
@@ -48,6 +48,37 @@ MONO_LOG_LEVEL=debug mono build/Example.exe
 > is 32bit and if you install `libhiredis` for example using Homebrew, it is built 64bit. In this case you will
 > get the `System.DllNotFoundException` even you have `libhiredis` installed. To fix this you can build mono from
 > sources and make sure it is 64bit.
+
+Performance
+===========
+
+Here's a simple benchmark against `ServiceStack.Redis` which is 100% C# code. Goal of this benchmark was to test whether it makes sence to use `libhiredis` at all due to the marshaling that needs to be done when calling unmanaged code. Based on the benchmark looks that the `Hiredis` driver is not at least any slower. Actually a bit faster and especially the pipeline performance seems to be a quite a lot higher. `Hiredis` should also put a lot less strain on the garbage collector since it naturally does not allocate that much managed memory.
+
+The benchmark was run on my MacBook Pro 2.2 GHz Intel Core i7.
+
+```bash
+Performing 100k SET operations (Hiredis) ...
+Time elapsed: 00:00:08.0168766
+Ops/sec: 12475.05
+Memory used: 4148 kB
+
+Performing 100k SET operations (ServiceStack) ...
+Time elapsed: 00:00:07.9942954
+Ops/sec: 12509.38
+Memory used: 4245 kB
+
+Performing 100k SET operations using pipeline (Hiredis) ...
+Time elapsed: 00:00:02.1839489
+Ops/sec: 45808.52
+Memory used: 5541 kB
+
+Performing 100k SET operations using pipeline (ServiceStack) ...
+Time elapsed: 00:00:03.9550154
+Ops/sec: 25284.45
+Memory used: 22197 kB
+```
+
+> See the source code of the benchmark at `benchmark/Benchmark.cs`.
 
 API
 ===
