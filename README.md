@@ -17,7 +17,7 @@ make
 That's it. The build will succeed whether you had `libhiredis` properly installed or not. To test whether the library works on your system you can build a simple example and try to run it. To do that, type:
 
 ```
-make example
+make examples
 ```
 
 Now you should have an EXE file called `Example.exe` in the `/build` directory. Make sure you have Redis server running in localhost and run this command:
@@ -78,7 +78,7 @@ Ops/sec: 25284.45
 Memory used: 22197 kB
 ```
 
-> See the source code of the benchmark at `examples/Benchmark.cs`.
+> See the source code of the benchmark at `benchmark/Benchmark.cs`.
 
 API
 ===
