@@ -25,7 +25,7 @@ namespace Hiredis
 		{
 			for (int i=0; i < this.OpCount; i++)
 			{
-				this.GetReply();
+				this.Client.GetReply();
 			}
 			this.OpCount = 0;
 		}
@@ -34,7 +34,7 @@ namespace Hiredis
 		{
 			for (int i=0; i < this.OpCount; i++)
 			{
-				yield return this.GetReply();
+				yield return this.Client.GetReply();
 			}
 		}
 
@@ -62,19 +62,6 @@ namespace Hiredis
 		{
 			LibHiredis.RedisAppendCommandArgv(this.Client.ContextPtr, argv.Length, argv, null);
 			this.OpCount++;
-		}
-
-		private RedisReply GetReply()
-		{
-			IntPtr replyPtr = Marshal.AllocHGlobal(Marshal.SizeOf(typeof(ReplyStruct)));
-			Marshal.StructureToPtr(new ReplyStruct(), replyPtr, false);
-
-			var result = LibHiredis.RedisGetReply(this.Client.ContextPtr, ref replyPtr);
-
-			if (result == 0)
-				return this.Client.CheckForError(new RedisReply(replyPtr));
-			else
-				throw new Exception(); // something went wrong
 		}
 	}
 }

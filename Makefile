@@ -1,10 +1,9 @@
 CC = mcs
 SOURCEDIR = src
-EXAMPLEDIR = examples
 SOURCES := $(shell find $(SOURCEDIR) -name '*.cs')
-EXAMPLES := $(shell find $(EXAMPLEDIR) -name '*.cs') 
 LIB = build/LibHiredis.dll
-EXE = build/Example.exe
+EXAMPLE = build/Example.exe
+PUBSUB = build/PubSub.exe
 BENCHMARK = build/Benchmark.exe
 
 all: $(LIB)
@@ -12,13 +11,16 @@ all: $(LIB)
 $(LIB): $(SOURCES)
 	$(CC) -t:library $(SOURCES) -out:$(LIB)
 
-$(EXE): $(LIB) examples/Example.cs
-	$(CC) -r:$(LIB) examples/Example.cs -out:$(EXE)
+$(EXAMPLE): $(LIB) examples/Example.cs
+	$(CC) -r:$(LIB) examples/Example.cs -out:$(EXAMPLE)
+
+$(PUBSUB): $(LIB) examples/PubSub.cs
+	$(CC) -r:$(LIB) examples/PubSub.cs -out:$(PUBSUB)
 
 $(BENCHMARK): $(LIB) benchmark/Benchmark.cs
-	$(CC) -r:$(LIB),build/ServiceStack.Redis.dll,build/ServiceStack.Interfaces.dll benchmark/Benchmark.cs -out:$(BENCHMARK)
+	$(CC) -r:$(LIB),build/ServiceStack.Redis.dll,build/ServiceStack.Interfaces.dll benchmark/Benchmark.cs -out:build/Benchmark.exe
 
-examples: $(EXE)
+examples: $(EXAMPLE) $(PUBSUB)
 
 benchmark: $(BENCHMARK)
 

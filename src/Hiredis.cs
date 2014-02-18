@@ -15,7 +15,8 @@ namespace Hiredis
 
 	public class RedisReply : IDisposable
 	{
-		private IntPtr replyPtr;
+		internal IntPtr replyPtr;
+
 		private ReplyStruct reply;
 		private bool nested;
 
@@ -128,7 +129,7 @@ namespace Hiredis
 			}
 		}
 
-		internal RedisReply CheckForError(RedisReply reply)
+		private RedisReply CheckForError(RedisReply reply)
 		{
 			if (reply.Type == ReplyType.Error)
 			{
@@ -140,9 +141,30 @@ namespace Hiredis
 			}
 		}
 
+		internal RedisReply GetReply(IntPtr replyPtr=default(IntPtr))
+		{
+			if (replyPtr == IntPtr.Zero)
+			{
+				replyPtr = Marshal.AllocHGlobal(Marshal.SizeOf(typeof(ReplyStruct)));
+				Marshal.StructureToPtr(new ReplyStruct(), replyPtr, false);
+			}
+
+			var result = LibHiredis.RedisGetReply(this.ContextPtr, ref replyPtr);
+
+			if (result == 0)
+				return this.CheckForError(new RedisReply(replyPtr));
+			else
+				throw new Exception(); // something went wrong
+		}
+
 		public RedisPipeline GetPipeline()
 		{
 			return new RedisPipeline(this);
+		}
+
+		public RedisSubscription GetSubscription()
+		{
+			return new RedisSubscription(this);
 		}
 
 		public RedisReply Command(string command)
