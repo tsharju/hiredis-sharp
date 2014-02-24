@@ -44,6 +44,7 @@ public class HiredisExample
 			foreach (var reply in pipeline2.FlushEnum())
 			{
 				Console.WriteLine("REPLY: {0}", reply.String);
+				reply.Dispose();
 			}
 
 			Console.WriteLine("");
@@ -62,6 +63,7 @@ public class HiredisExample
 				foreach (var member in reply.Array)
 				{
 					Console.WriteLine("MEMBER: {0}", member.Type);
+					member.Dispose();
 				}
 			}
 
@@ -75,6 +77,7 @@ public class HiredisExample
 				foreach (var member in reply.Array)
 				{
 					Console.WriteLine("REPLY: {0}", member.Type);
+					member.Dispose();
 				}
 			}
 
