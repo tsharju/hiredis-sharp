@@ -10,6 +10,7 @@ all: $(LIB)
 
 $(LIB): $(SOURCES)
 	$(CC) -t:library $(SOURCES) -out:$(LIB)
+	monodis --assembly $(LIB)
 
 $(EXAMPLE): $(LIB) examples/Example.cs
 	$(CC) -r:$(LIB) examples/Example.cs -out:$(EXAMPLE)
