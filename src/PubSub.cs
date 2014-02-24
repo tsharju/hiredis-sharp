@@ -46,6 +46,7 @@ namespace Hiredis
 
 			enumerator.MoveNext();
 			var messageType = enumerator.Current.String;
+			enumerator.Current.Dispose();
 
 			string channel;
 			long numChannels;

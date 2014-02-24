@@ -25,7 +25,8 @@ namespace Hiredis
 		{
 			for (int i=0; i < this.OpCount; i++)
 			{
-				this.Client.GetReply();
+				var reply = this.Client.GetReply();
+				reply.Dispose();
 			}
 			this.OpCount = 0;
 		}
