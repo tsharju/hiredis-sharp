@@ -6,7 +6,20 @@ namespace Hiredis
 		public SubscriptionFailedException() : base() {}
 	}
 
-	public class RedisSubscription
+	public interface IRedisSubscription
+	{
+		Action<string, string> OnMessage { get; set; }
+		Action<string> OnSubscribe { get; set; }
+		Action<string> OnUnsubscribe { get; set; }
+
+		void PSubscribe(params string[] patterns);
+		void PUnsubscribe(params string[] patterns);
+		
+		void Subscribe(params string[] channels);
+		void Unsubscribe(params string[] channels);
+	}
+
+	public class RedisSubscription : IRedisSubscription
 	{
 		private RedisClient client;
 		private bool hasSubscriptions = false;
@@ -40,7 +53,7 @@ namespace Hiredis
 			DoCommand("PUNSUBSCRIBE", patterns);
 		}
 
-		private void HandleReply(RedisReply reply)
+		private void HandleReply(IRedisReply reply)
 		{
 			var enumerator = reply.Array.GetEnumerator();
 

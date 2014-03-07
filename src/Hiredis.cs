@@ -13,7 +13,30 @@ namespace Hiredis
 		public CommandFailedException(string msg) : base(msg) {}
 	}
 
-	public class RedisReply : IDisposable
+	public interface IRedisReply : IDisposable
+	{
+		long Integer { get; }
+		string String { get; }
+		IEnumerable<Hiredis.RedisReply> Array { get; }
+
+		ReplyType Type { get; }
+	}
+
+	public interface IRedisClient : IDisposable
+	{
+		IRedisReply Command(params string[] argv);
+		IRedisReply Command(string command);
+		IRedisReply Command(string command, string key);
+		IRedisReply Command(string command, string key, string value);
+
+		void Connect();
+
+		IRedisPipeline GetPipeline();
+
+		IRedisSubscription GetSubscription();
+	}
+
+	public class RedisReply : IRedisReply
 	{
 		internal IntPtr replyPtr;
 
@@ -75,7 +98,7 @@ namespace Hiredis
 		}
 	}
 
-	public class RedisClient : IDisposable
+	public class RedisClient : IRedisClient
 	{
 		public string Host;
 		public int Port;
@@ -129,7 +152,7 @@ namespace Hiredis
 			}
 		}
 
-		private RedisReply CheckForError(RedisReply reply)
+		private IRedisReply CheckForError(RedisReply reply)
 		{
 			if (reply.Type == ReplyType.Error)
 			{
@@ -141,7 +164,7 @@ namespace Hiredis
 			}
 		}
 
-		internal RedisReply GetReply(IntPtr replyPtr=default(IntPtr))
+		internal IRedisReply GetReply(IntPtr replyPtr=default(IntPtr))
 		{
 			if (replyPtr == IntPtr.Zero)
 			{
@@ -157,37 +180,37 @@ namespace Hiredis
 				throw new Exception(); // something went wrong
 		}
 
-		public RedisPipeline GetPipeline()
+		public IRedisPipeline GetPipeline()
 		{
 			return new RedisPipeline(this);
 		}
 
-		public RedisSubscription GetSubscription()
+		public IRedisSubscription GetSubscription()
 		{
 			return new RedisSubscription(this);
 		}
 
-		public RedisReply Command(string command)
+		public IRedisReply Command(string command)
 		{
 			var replyPtr = LibHiredis.RedisCommand(this.ContextPtr, command);
 			return this.CheckForError(new RedisReply(replyPtr));
 		}
 
-		public RedisReply Command(string command, string key)
+		public IRedisReply Command(string command, string key)
 		{
 			var cmd = String.Format("{0} %s", command);
 			var replyPtr = LibHiredis.RedisCommand(this.ContextPtr, cmd, key);
 			return this.CheckForError(new RedisReply(replyPtr));
 		}
 
-		public RedisReply Command(string command, string key, string value)
+		public IRedisReply Command(string command, string key, string value)
 		{
 			var cmd = String.Format("{0} %s %s", command);
 			var replyPtr = LibHiredis.RedisCommand(this.ContextPtr, cmd, key, value);
 			return this.CheckForError(new RedisReply(replyPtr));
 		}
 
-		public RedisReply Command(params string[] argv)
+		public IRedisReply Command(params string[] argv)
 		{
 			var replyPtr = LibHiredis.RedisCommandArgv(this.ContextPtr, argv.Length, argv, null);
 			return this.CheckForError(new RedisReply(replyPtr));

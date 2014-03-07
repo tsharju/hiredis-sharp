@@ -4,7 +4,19 @@ using System.Runtime.InteropServices;
 
 namespace Hiredis
 {
-	public class RedisPipeline : IDisposable
+	public interface IRedisPipeline : IDisposable
+	{
+		void AppendCommand(params string[] argv);
+		void AppendCommand(string command);
+		void AppendCommand(string command, string key);
+		void AppendCommand(string command, string key, string value);
+
+		void Flush();
+		
+		IEnumerable<IRedisReply> FlushEnum();
+	}
+
+	public class RedisPipeline : IRedisPipeline
 	{
 		private RedisClient Client;
 		private int OpCount;
@@ -31,7 +43,7 @@ namespace Hiredis
 			this.OpCount = 0;
 		}
 
-		public IEnumerable<RedisReply> FlushEnum()
+		public IEnumerable<IRedisReply> FlushEnum()
 		{
 			for (int i=0; i < this.OpCount; i++)
 			{
