@@ -30,6 +30,7 @@ namespace Hiredis
 		IRedisReply Command(string command, string key, string value);
 
 		void Connect();
+		void Disconnect (bool dispose = false);
 
 		IRedisPipeline GetPipeline();
 
@@ -125,6 +126,14 @@ namespace Hiredis
 				throw new ConnectionFailedException(context.errstr);
 			else
 				this.Connected = true;
+		}
+
+		public void Disconnect (bool dispose = false)
+		{
+			this.Command ("QUIT");
+
+			if (dispose)
+				this.Dispose ();
 		}
 
 		~RedisClient()

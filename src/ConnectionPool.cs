@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 
 namespace Hiredis
 {
@@ -7,11 +8,23 @@ namespace Hiredis
 		public ConnectionPoolTimeout(string msg) : base(msg) {}
 	}
 
+	public interface IRedisConnectionPool
+	{
+		string Host { get; }
+		int Port { get; }
+		int Size { get; }
+
+		void AddClient(PooledRedisClient client);
+		void Close();
+
+		PooledRedisClient GetClient (int timeout = -1);
+	}
+
 	public class PooledRedisClient : RedisClient, IDisposable
 	{
-		private RedisConnectionPool Pool;
+		private IRedisConnectionPool Pool;
 
-		public PooledRedisClient(RedisConnectionPool pool) : base(pool.Host, pool.Port, false)
+		public PooledRedisClient(IRedisConnectionPool pool) : base(pool.Host, pool.Port, false)
 		{
 			this.Pool = pool;
 		}
@@ -23,48 +36,175 @@ namespace Hiredis
 		}
 	}
 
-	public class RedisConnectionPool
+	public class RedisBaseConnectionPool : IDisposable
 	{
-		public readonly string Host;
-		public readonly int Port;
+		public string Host { get { return this.host; } }
+		public int Port { get { return this.port; } }
+		public int Size { get { return this.size; } }
 
-		private BlockingCollection<PooledRedisClient> Pool;
+		private readonly string host;
+		private readonly int port;
+		private readonly int size;
 
-		public RedisConnectionPool(string host, int port, int maxSize=5)
+		protected HashSet<PooledRedisClient> connectionsInUse = new HashSet<PooledRedisClient>();
+		protected bool closing = false;
+
+		public RedisBaseConnectionPool(string host, int port, int size)
 		{
-			this.Host = host;
-			this.Port = port;
-			this.Pool = new BlockingCollection<PooledRedisClient>(maxSize);
+			this.host = host;
+			this.port = port;
+			this.size = size;
+		}
+
+		protected void markUsed(PooledRedisClient client)
+		{
+			this.connectionsInUse.Add (client);
+		}
+
+		protected void markUnused(PooledRedisClient client)
+		{
+			this.connectionsInUse.Remove (client);
+		}
+
+		public void Dispose()
+		{
+			this.Close ();
+		}
+
+		public void AddClient(PooledRedisClient client)
+		{
+			throw new NotImplementedException ("Implementing subclass needs to override this method.");
+		}
+
+		public PooledRedisClient GetClient(int timeout = -1)
+		{
+			throw new NotImplementedException ("Implementing subclass needs to override this method.");
+		}
+
+		public void Close()
+		{
+			throw new NotImplementedException ("Implementing subclass needs to override this method.");
+		}
+	}
+
+	public class RedisConnectionPool : RedisBaseConnectionPool, IRedisConnectionPool
+	{
+		private ConcurrentBag<PooledRedisClient> pool;
+
+		public RedisConnectionPool (string host, int port, int size) : base(host, port, size)
+		{
+			this.pool = new ConcurrentBag<PooledRedisClient> ();
+		}
+
+		public new PooledRedisClient GetClient(int timeout = -1)
+		{
+			if (this.closing)
+				return null;
+
+			PooledRedisClient client;
+
+			if (this.pool.TryTake (out client)) {
+				// we check if there's too many connections and
+				// disconnect one of them on every call to GetClient
+				if (this.pool.Count > this.Size)
+				{
+					PooledRedisClient removedClient;
+					if (this.pool.TryTake (out removedClient))
+					{
+						removedClient.Disconnect (dispose: true);
+					}
+				}
+
+				if (!client.Connected)
+					client.Connect ();
+			}
+			else
+			{
+				// couldn't get a client from the pool
+				// we create a new one
+				client = new PooledRedisClient(this);
+				client.Connect ();
+			}
+
+			// keep track of connections taken from pool
+			this.markUsed (client);
+
+			return client;
+		}
+
+		public new void AddClient(PooledRedisClient client)
+		{
+			this.markUnused (client);
+
+			this.pool.Add (client);
+		}
+
+		public new void Close()
+		{
+			this.closing = true;
+
+			foreach (var client in this.pool)
+			{
+				client.Disconnect (dispose: true);
+			}
+
+			foreach (var client in this.connectionsInUse)
+			{
+				client.Disconnect (dispose: true);
+			}
+		}
+	}
+
+	public class RedisBlockingConnectionPool : RedisBaseConnectionPool, IRedisConnectionPool
+	{
+		private BlockingCollection<PooledRedisClient> pool;
+
+		public RedisBlockingConnectionPool(string host, int port, int size) : base(host, port, size)
+		{
+			this.pool = new BlockingCollection<PooledRedisClient>(size);
 
 			// fill the pool with clients that are not connected
 			// we will connect them once they are fetched from the pool
-			for (int i = 0; i < maxSize; i++)
+			for (int i = 0; i < size; i++)
 			{
-				this.Pool.Add(new PooledRedisClient(this));
+				this.pool.Add(new PooledRedisClient(this));
 			}
 		}
 
-		public PooledRedisClient GetClient(int timeout=-1)
+		public new PooledRedisClient GetClient(int timeout = -1)
 		{
 			PooledRedisClient client;
 
-			if (this.Pool.TryTake(out client, timeout))
+			if (this.pool.TryTake(out client, timeout))
 			{
 				if (!client.Connected)
 					client.Connect();
+
+				this.markUsed (client);
 
 				return client;
 			}
 			else
 			{
 				throw new ConnectionPoolTimeout(
-					String.Format("Could not get client from pool in {0} ms. Increase pool size maybe?", timeout));
+					String.Format("Could not get client from pool in {0} ms. Connections in-use/in-pool={1}/{2}.",
+						timeout, this.connectionsInUse.Count, this.pool.Count));
 			}
 		}
 
-		public void AddClient(PooledRedisClient client)
+		public new void Close()
 		{
-			this.Pool.Add(client);
+			this.closing = true;
+
+			foreach (var client in this.pool)
+			{
+				client.Disconnect (dispose: true);
+			}
+
+			foreach (var client in this.connectionsInUse)
+			{
+				client.Disconnect (dispose: true);
+			}
 		}
 	}
 }
