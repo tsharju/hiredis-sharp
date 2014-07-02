@@ -36,7 +36,7 @@ namespace Hiredis
 		}
 	}
 
-	public class RedisBaseConnectionPool : IDisposable
+	public abstract class RedisBaseConnectionPool : IDisposable
 	{
 		public string Host { get { return this.host; } }
 		public int Port { get { return this.port; } }
@@ -71,20 +71,9 @@ namespace Hiredis
 			this.Close ();
 		}
 
-		public void AddClient(PooledRedisClient client)
-		{
-			throw new NotImplementedException ("Implementing subclass needs to override this method.");
-		}
-
-		public PooledRedisClient GetClient(int timeout = -1)
-		{
-			throw new NotImplementedException ("Implementing subclass needs to override this method.");
-		}
-
-		public void Close()
-		{
-			throw new NotImplementedException ("Implementing subclass needs to override this method.");
-		}
+		public abstract void AddClient (PooledRedisClient client);
+		public abstract PooledRedisClient GetClient (int timeout = -1);
+		public abstract void Close ();
 	}
 
 	public class RedisConnectionPool : RedisBaseConnectionPool, IRedisConnectionPool
@@ -96,7 +85,7 @@ namespace Hiredis
 			this.pool = new ConcurrentBag<PooledRedisClient> ();
 		}
 
-		public new PooledRedisClient GetClient(int timeout = -1)
+		public override PooledRedisClient GetClient(int timeout = -1)
 		{
 			if (this.closing)
 				return null;
@@ -132,14 +121,14 @@ namespace Hiredis
 			return client;
 		}
 
-		public new void AddClient(PooledRedisClient client)
+		public override void AddClient(PooledRedisClient client)
 		{
 			this.markUnused (client);
 
 			this.pool.Add (client);
 		}
 
-		public new void Close()
+		public override void Close()
 		{
 			this.closing = true;
 
@@ -171,7 +160,7 @@ namespace Hiredis
 			}
 		}
 
-		public new PooledRedisClient GetClient(int timeout = -1)
+		public override PooledRedisClient GetClient(int timeout = -1)
 		{
 			PooledRedisClient client;
 
@@ -192,7 +181,14 @@ namespace Hiredis
 			}
 		}
 
-		public new void Close()
+		public override void AddClient(PooledRedisClient client)
+		{
+			this.markUnused (client);
+
+			this.pool.Add (client);
+		}
+
+		public override void Close()
 		{
 			this.closing = true;
 
